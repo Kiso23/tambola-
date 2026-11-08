@@ -102,6 +102,11 @@ pool.on('error', (err) => {
 // Initialize PostgreSQL tables
 async function initializeDatabase() {
     try {
+        // Drop existing tables if they have the wrong schema (for migration)
+        await pool.query(`DROP TABLE IF EXISTS payment_verifications CASCADE`);
+        await pool.query(`DROP TABLE IF EXISTS tickets CASCADE`);
+        
+        // Recreate with correct schema
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
@@ -142,7 +147,7 @@ async function initializeDatabase() {
         `);
 
         // Check if tickets already exist
-        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
+        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
         
         if (ticketCount.rows[0].count === 0) {
             console.log('📝 Generating 80 Tambola tickets...');
