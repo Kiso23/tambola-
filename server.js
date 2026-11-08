@@ -252,6 +252,11 @@ if (false && cluster.isPrimary && numCPUs > 1) {
     const games = new Map();
     const gameConnections = new Map();
 
+    // Health check endpoint
+    app.get('/api/health', (req, res) => {
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+
     // Game class (same as before)
     class WinterBumperGame {
         constructor(gameId) {
@@ -591,21 +596,23 @@ if (false && cluster.isPrimary && numCPUs > 1) {
     // Get available tickets for selection (80 pre-generated tickets)
     app.get('/api/available-tickets', async (req, res) => {
         try {
+            res.setHeader('Content-Type', 'application/json');
             const result = await pool.query(
-                'SELECT id, serialNumber, playerName, ticket, paymentStatus FROM tickets WHERE paymentStatus IN ($1, $2) ORDER BY serialNumber ASC',
+                'SELECT id, "serialNumber", "playerName", ticket, "paymentStatus" FROM tickets WHERE "paymentStatus" IN ($1, $2) ORDER BY "serialNumber" ASC',
                 ['available', 'approved']
             );
             const tickets = result.rows.map(row => ({
                 id: row.id,
-                serialNumber: row.serialnumber || row.serialNumber,
-                playerName: row.playername || row.playerName,
-                ticket: JSON.parse(row.ticket),
-                isBooked: (row.paymentstatus || row.paymentStatus) === 'approved'
+                serialNumber: row.serialNumber,
+                playerName: row.playerName,
+                ticket: typeof row.ticket === 'string' ? JSON.parse(row.ticket) : row.ticket,
+                isBooked: row.paymentStatus === 'approved'
             }));
             res.json({ tickets, totalAvailable: tickets.length });
         } catch (err) {
-            console.error('DB error:', err);
-            res.status(500).json({ error: 'Database error' });
+            console.error('❌ Error loading tickets:', err.message);
+            res.setHeader('Content-Type', 'application/json');
+            res.status(500).json({ error: 'Database error', message: err.message });
         }
     });
 
