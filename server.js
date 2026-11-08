@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 import cluster from 'cluster';
 import os from 'os';
 import pg from 'pg';
-import redis from 'redis';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -135,40 +134,6 @@ async function initializeDatabase() {
     } catch (err) {
         console.error('Error initializing database:', err);
     }
-}
-
-// ═════════════════════════════════════════════════════════════════════
-// REDIS CACHE (Optional - gracefully handle if unavailable)
-// ═════════════════════════════════════════════════════════════════════
-let redisClient = null;
-let redisConnected = false;
-
-// Only create Redis client if in development or if explicitly enabled
-if (process.env.ENABLE_REDIS === 'true' || process.env.NODE_ENV === 'development') {
-    try {
-        redisClient = redis.createClient({
-            host: process.env.REDIS_HOST || 'localhost',
-            port: process.env.REDIS_PORT || 6379,
-            socket: {
-                reconnectStrategy: (retries) => Math.min(retries * 50, 500)
-            }
-        });
-
-        redisClient.on('error', (err) => {
-            console.warn('⚠️  Redis error (continuing without cache):', err.message);
-            redisConnected = false;
-        });
-
-        redisClient.on('connect', () => {
-            console.log('✅ Redis connected');
-            redisConnected = true;
-        });
-    } catch (err) {
-        console.warn('⚠️  Redis not available, continuing without cache');
-        redisClient = null;
-    }
-} else {
-    console.log('⚠️  Redis disabled for production (use ENABLE_REDIS=true to enable)');
 }
 
 // ═════════════════════════════════════════════════════════════════════
