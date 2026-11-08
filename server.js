@@ -138,20 +138,38 @@ async function initializeDatabase() {
 }
 
 // ═════════════════════════════════════════════════════════════════════
-// REDIS CACHE
+// REDIS CACHE (Optional - gracefully handle if unavailable)
 // ═════════════════════════════════════════════════════════════════════
-const redisClient = redis.createClient({
-    host: 'localhost',
-    port: 6379,
-    socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+let redisClient = null;
+let redisConnected = false;
+
+// Only create Redis client if in development or if explicitly enabled
+if (process.env.ENABLE_REDIS === 'true' || process.env.NODE_ENV === 'development') {
+    try {
+        redisClient = redis.createClient({
+            host: process.env.REDIS_HOST || 'localhost',
+            port: process.env.REDIS_PORT || 6379,
+            socket: {
+                reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+            }
+        });
+
+        redisClient.on('error', (err) => {
+            console.warn('⚠️  Redis error (continuing without cache):', err.message);
+            redisConnected = false;
+        });
+
+        redisClient.on('connect', () => {
+            console.log('✅ Redis connected');
+            redisConnected = true;
+        });
+    } catch (err) {
+        console.warn('⚠️  Redis not available, continuing without cache');
+        redisClient = null;
     }
-});
-
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-await redisClient.connect();
-
-console.log('✅ Redis cache connected');
+} else {
+    console.log('⚠️  Redis disabled for production (use ENABLE_REDIS=true to enable)');
+}
 
 // ═════════════════════════════════════════════════════════════════════
 // CLUSTERING SETUP
