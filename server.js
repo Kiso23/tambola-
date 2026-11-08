@@ -713,6 +713,29 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
     });
 
+    // Get available tickets for selection
+    app.get('/api/available-tickets', async (req, res) => {
+        try {
+            res.setHeader('Content-Type', 'application/json');
+            const result = await pool.query(
+                'SELECT id, "serialNumber", "playerName", ticket, "paymentStatus" FROM tickets WHERE "paymentStatus" = $1 ORDER BY "serialNumber" ASC LIMIT 80',
+                ['available']
+            );
+            const tickets = result.rows.map(row => ({
+                id: row.id,
+                serialNumber: row.serialNumber,
+                playerName: row.playerName,
+                ticket: typeof row.ticket === 'string' ? JSON.parse(row.ticket) : row.ticket,
+                isBooked: false
+            }));
+            res.json({ tickets, totalAvailable: tickets.length });
+        } catch (err) {
+            console.error('❌ Error loading tickets:', err.message);
+            res.setHeader('Content-Type', 'application/json');
+            res.status(500).json({ error: 'Database error', message: err.message });
+        }
+    });
+
     // Generate and send ticket email
     async function generateAndSendTicketEmail(playerEmail, playerName, ticket, serialNumber, ticketId) {
         if (!ticket || !Array.isArray(ticket)) {
