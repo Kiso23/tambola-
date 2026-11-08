@@ -810,15 +810,17 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
     });
 
-    const PORT = process.env.PORT || 3000;
-    
     // Initialize database and start server
-    initializeDatabase().then(() => {
-        server.listen(PORT, () => {
-            console.log(`✨ Worker ${process.pid} running on port ${PORT}`);
-        });
-    }).catch(err => {
-        console.error('Failed to initialize database:', err);
-        process.exit(1);
+    try {
+        await initializeDatabase();
+        console.log('✅ Database initialized successfully');
+    } catch (err) {
+        console.error('⚠️  Database initialization failed:', err.message);
+        console.log('⚠️  Starting server WITHOUT database (read-only mode)');
+    }
+    
+    server.listen(PORT, () => {
+        console.log(`✨ Worker ${process.pid} running on port ${PORT}`);
+        console.log(`🌐 Access at: http://localhost:${PORT}`);
     });
 }
