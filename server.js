@@ -15,6 +15,14 @@ const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const numCPUs = os.cpus().length;
 
+// Log environment variables on startup
+console.log('\n📋 ENVIRONMENT VARIABLES:');
+console.log(`   DB_HOST: ${process.env.DB_HOST || 'NOT SET'}`);
+console.log(`   DB_NAME: ${process.env.DB_NAME || 'NOT SET'}`);
+console.log(`   DB_USER: ${process.env.DB_USER || 'NOT SET'}`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'NOT SET'}`);
+console.log(`   PORT: ${process.env.PORT || 'NOT SET'}\n`);
+
 // Validate required environment variables
 const requiredVars = ['BREVO_API_KEY'];
 for (const varName of requiredVars) {
