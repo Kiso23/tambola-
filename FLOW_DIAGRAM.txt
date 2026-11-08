@@ -1,0 +1,498 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                    🎯 WINTER BUMPER - APPLICATION FLOW                        ║
+║                                                                               ║
+║                         Complete User Journey Map                             ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                          🏠 MAIN SCREEN (Landing Page)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                                   HOME
+                              ❄️ Winter Bumper ❄️
+                          Premium Lottery Platform
+
+                        ┌───────────────────────────┐
+                        │   Three Action Cards      │
+                        └───────────────────────────┘
+
+         ┌────────────────┬────────────────┬────────────────┐
+         │                │                │                │
+         ▼                ▼                ▼                ▼
+    🎫 BUY TICKET    🎮 PLAY GAME    🔐 ADMIN LOGIN
+         │                │                │
+         │                │                │
+    [SCREEN 1]        [SCREEN 2]       [SCREEN 3]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🎫 PATH 1: BUY TICKET FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    HOME
+      │ [Click "Buy Ticket"]
+      ▼
+    SCREEN 1: TICKET PURCHASE
+      ├─ Enter Player Name
+      ├─ Display Suggested Numbers
+      ├─ Manual Number Selection (15 numbers from 1-90)
+      │  └─ Remove unwanted numbers
+      │  └─ Add missing numbers
+      │  └─ Number selector grid
+      │
+      ├─ [NEXT BUTTON] ──────────────────┐
+      │                                   │
+      ├─────────────────────────────────  ▼
+      │                             SCREEN 2: PAYMENT
+      │                               ├─ UPI ID: asha22@slc
+      │                               ├─ Display QR Code (qr.png)
+      │                               ├─ Payment App Buttons:
+      │                               │   ├─ Google Pay
+      │                               │   └─ PhonePe
+      │                               ├─ Screenshot Upload
+      │                               ├─ File Preview
+      │                               │
+      │                               ├─ [SUBMIT SCREENSHOT] ──┐
+      │                               │                        │
+      └─────────────────────────────────────────────────────── ▼
+                                          SCREEN 3: SUCCESS
+                                            ├─ ✅ Ticket Purchased!
+                                            ├─ Display ticket numbers
+                                            ├─ Show purchase details
+                                            │
+                                            ├─ [BACK TO HOME] ──────┐
+                                            │                       │
+                                            └───────────────────────┘
+                                                      │
+                                                      ▼
+                                                    HOME
+
+    DATABASE: Ticket stored in tickets.db
+    ├─ playerName: [entered name]
+    ├─ ticket: [15 numbers in 3x9 grid]
+    ├─ purchasedAt: [timestamp]
+    └─ used: 0 (not used yet)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🎮 PATH 2: PLAY GAME FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    HOME
+      │ [Click "Play Game"]
+      ▼
+    SCREEN 2A: PLAYER LOGIN
+      ├─ Enter Player Name
+      │
+      ├─ [NEXT BUTTON]
+      │
+      ├──────────────────────────────────────┐
+      │                                      │
+      ▼                                      │
+    SCREEN 2B: SELECT TICKET                 │
+      ├─ List Available Tickets (from DB)    │
+      ├─ Display ticket numbers              │
+      ├─ Select one ticket                   │
+      │                                      │
+      ├─ [CONTINUE BUTTON]                   │
+      │                                      │
+      ├──────────────────────────────────────┤
+      │                                      │
+      ▼                                      │
+    SCREEN 2C: ENTER GAME CODE                │
+      ├─ Input: Game Code (from admin/URL)  │
+      ├─ Validation: Check if code exists   │
+      │                                      │
+      ├─ [JOIN GAME BUTTON] ◄────────────────┘
+      │   (Disabled until code entered)
+      │
+      ├─────────────────────────┐
+      │                         │
+      ▼                         │
+    WEBSOCKET CONNECTION         │
+      ├─ Send: join_game message │
+      ├─ Receive: game_joined    │
+      │                          │
+      ├────────────────────────  ▼
+      │                  SCREEN 4: PLAYER GAME
+      │                    ├─ Ticket Display (3x9 grid)
+      │                    ├─ Numbers Auto-Mark as Called
+      │                    ├─ Called Numbers List
+      │                    ├─ Player Status
+      │                    ├─ [CLAIM FIRST LINE]
+      │                    ├─ [CLAIM TWO LINES]
+      │                    ├─ [CLAIM FULL HOUSE]
+      │                    ├─ [LOGOUT]
+      │                    │
+      │                    └─ Real-time Updates
+      │                       ├─ number_announced
+      │                       ├─ player_joined
+      │                       ├─ winner_announced
+      │                       └─ player_count
+      │
+      └─ Auto-marks numbers on ticket when called
+         Shows win verification results
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🔐 PATH 3: ADMIN FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    HOME
+      │ [Click "Admin Login"]
+      ▼
+    SCREEN 3: ADMIN LOGIN
+      ├─ Username Input
+      ├─ Password Input
+      │ (Default: admin / admin123)
+      │
+      ├─ [LOGIN BUTTON]
+      │
+      ├─────────────────┐
+      │                 │
+      ├─ SUCCESS        ▼
+      │            SCREEN 5: ADMIN PANEL
+      │              ├─ Two Tabs Available:
+      │              │  ├─ Tab 1: HOST GAME
+      │              │  └─ Tab 2: VERIFY TICKETS
+      │              │
+      │              ├─ Tab 1: HOST GAME
+      │              │  ├─ Game Code (auto-generated)
+      │              │  ├─ Players Joined Count
+      │              │  ├─ Numbers Called Count
+      │              │  ├─ Players List
+      │              │  ├─ [CREATE GAME BUTTON]
+      │              │  │  └─ Start WebSocket connection
+      │              │  ├─ [START GAME BUTTON]
+      │              │  │  └─ Enable auto-draw
+      │              │  │  └─ Numbers draw every 6.5 sec
+      │              │  ├─ [PAUSE BUTTON] (when running)
+      │              │  │  └─ Stop auto-draw
+      │              │  ├─ [RESUME BUTTON] (when paused)
+      │              │  │  └─ Resume auto-draw
+      │              │  ├─ Called Numbers Display
+      │              │  ├─ Winners List
+      │              │  │  ├─ Winner Name
+      │              │  │  ├─ Prize Type (First Line, Two Lines, Full House)
+      │              │  │  ├─ Tie Detection (TIE x2, TIE x3, etc.)
+      │              │  │  └─ Auto Prize Splitting
+      │              │  └─ [LOGOUT BUTTON]
+      │              │
+      │              ├─ Tab 2: VERIFY TICKETS
+      │              │  ├─ All Purchased Tickets
+      │              │  ├─ Group by Player Name
+      │              │  ├─ Display Ticket Details:
+      │              │  │  ├─ Player Name
+      │              │  │  ├─ Ticket Numbers (3x9 grid)
+      │              │  │  ├─ Purchase Date/Time
+      │              │  │  ├─ Used Status
+      │              │  │  └─ Ticket ID
+      │              │  └─ [BACK TO HOME] or [LOGOUT]
+      │              │
+      │              └─ Real-time Updates:
+      │                 ├─ player_joined
+      │                 ├─ player_count
+      │                 ├─ winner_announced
+      │                 └─ number_announced
+      │
+      ├─ FAILURE
+      │   └─ Show error message: "Invalid credentials"
+      │   └─ Allow retry
+      │
+      └─ [BACK BUTTON]
+         └─ Return to HOME
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🔄 AUTO-DRAW GAME FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Game Created
+      │
+      ▼
+    [START GAME] Button Clicked
+      │ ├─ gameState.autoDrawEnabled = true
+      │ ├─ startAutoDrawTimer() called
+      │ └─ Button changes to [PAUSE]
+      │
+      ├─────────────────┐
+      │                 │
+      ▼                 │
+    DRAW FIRST NUMBER   │
+      ├─ Random number 1-90 (unused)  │
+      ├─ drawAuto() function          │
+      ├─ Send via WebSocket           │
+      ├─ Voice announce number        │
+      │                               │
+      ├─ WAIT 6.5 SECONDS ◄───────────┘
+      │
+      ▼
+    DRAW NEXT NUMBER
+      ├─ Random number 1-90 (unused)
+      ├─ Send via WebSocket
+      ├─ Auto-mark on all player tickets
+      ├─ Voice announce
+      │
+      ├─ [PAUSE] Button Available
+      │   └─ Stops drawing, shows [RESUME]
+      │
+      ├─ [RESUME] Button Available
+      │   └─ Resumes drawing, shows [PAUSE]
+      │
+      └─ Continue until...
+         ├─ Admin clicks PAUSE, or
+         ├─ All 90 numbers called, or
+         └─ Game ends
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🏆 WIN VERIFICATION & TIE DETECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Player Claims Win
+      │ ├─ Claim Type: First Line / Two Lines / Full House
+      │ ├─ Send claim_win message
+      │ └─ Mark claim in database
+      │
+      ▼
+    Server Validates Win
+      ├─ Check if all required numbers are marked
+      ├─ Verify win type conditions
+      │
+      ├─ WIN VALID
+      │  │
+      │  ├─ Add to winners list
+      │  ├─ Check for OTHER winners with SAME win type
+      │  │
+      │  ├─ TIE DETECTED (2+ players same prize)
+      │  │  │
+      │  │  ├─ Announce: "TIE x2" (2 winners)
+      │  │  ├─ Show all tied player names
+      │  │  ├─ Auto-calculate: Prize / Number of Winners
+      │  │  ├─ Display to all players and admin
+      │  │  └─ No manual intervention needed
+      │  │
+      │  └─ NO TIE (Only this player won)
+      │     ├─ Announce: "[Player Name] wins [Prize Type]!"
+      │     └─ Show win details
+      │
+      └─ WIN INVALID
+         ├─ Show error: "Invalid win claim"
+         ├─ Numbers don't match requirements
+         └─ Allow retry
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        💾 DATABASE FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    BUY TICKET
+      ├─ POST /api/purchase-ticket
+      │  ├─ PlayerName: [user input]
+      │  ├─ Ticket: [selected 15 numbers]
+      │  └─ Server inserts into DB
+      │
+      ▼
+    tickets TABLE
+      ├─ id: [auto-increment]
+      ├─ playerName: [name]
+      ├─ ticket: [JSON 3x9 grid]
+      ├─ purchasedAt: [timestamp]
+      └─ used: 0
+
+    RETRIEVE TICKETS
+      ├─ GET /api/player-tickets/:playerName
+      │  └─ Server queries DB by playerName
+      │  └─ Returns unused tickets (used = 0)
+      │
+      ▼
+    DISPLAY TO PLAYER
+      ├─ Show available tickets
+      ├─ Player selects one
+      └─ Use for joining game
+
+    VIEW ALL TICKETS (Admin)
+      ├─ GET /api/all-tickets
+      │  └─ Server queries all tickets
+      │
+      ▼
+    ADMIN VERIFY TAB
+      ├─ Display all purchased tickets
+      ├─ Group by playerName
+      ├─ Show ticket details
+      └─ Audit trail
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🌐 WEBSOCKET MESSAGES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ADMIN MESSAGES
+      ├─ create_game
+      │  └─ Creates new game, returns gameId
+      │
+      ├─ announce_number
+      │  ├─ Sends: { type: 'announce_number', number: X }
+      │  └─ Broadcasts to all players
+      │
+      └─ Game Management
+         ├─ Player list updates
+         ├─ Winner announcements
+         └─ Tie detection broadcasts
+
+    PLAYER MESSAGES
+      ├─ join_game
+      │  ├─ Sends: { type: 'join_game', gameId, playerName, ticket }
+      │  └─ Server adds to game
+      │
+      ├─ claim_win
+      │  ├─ Sends: { type: 'claim_win', playerId, winType }
+      │  └─ Server validates and broadcasts result
+      │
+      └─ Receive Messages
+         ├─ number_announced
+         ├─ player_joined
+         ├─ winner_announced
+         ├─ player_count
+         └─ game_joined
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🔄 PAGE TRANSITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Every Transition:
+      1. showLoader() ................. Show beautiful page loader
+      2. setTimeout(400ms)
+         ├─ Hide current screen
+         ├─ Show next screen
+         └─ Initialize form/data
+      3. hideLoader() ................. Hide loader
+      4. Display new screen
+
+    Loader Features:
+      ├─ Animated snowflake logo
+      ├─ Spinning gradient ring
+      ├─ Blinking dots
+      ├─ Falling snowflakes background
+      └─ 300-800ms animation
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        📊 SCREEN MAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Screen 0: mainButtons (HOME)
+      └─ 3 action cards: Buy Ticket, Play Game, Admin
+
+    Screen 1: ticketPurchaseScreen
+      └─ Select 15 numbers
+
+    Screen 1.5: Payment (part of ticketPurchaseScreen)
+      └─ UPI QR, Payment apps, Screenshot upload
+
+    Screen 2: ticketSuccessScreen
+      └─ Confirmation with ticket details
+
+    Screen 3: playerLoginScreen
+      └─ Enter player name
+
+    Screen 4: selectTicketScreen
+      └─ Choose from purchased tickets
+
+    Screen 5: playerGameScreen
+      └─ Live game with ticket display
+
+    Screen 6: adminLoginScreen
+      └─ Username & password
+
+    Screen 7: adminScreen
+      └─ Two tabs: Host Game & Verify Tickets
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        ✅ FLOW VERIFICATION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PLAYER BUY TICKET PATH:
+  ✅ Home → Buy Ticket screen
+  ✅ Enter name → Number selection
+  ✅ Payment screen with QR code
+  ✅ Screenshot upload
+  ✅ Success confirmation
+  ✅ Ticket stored in database
+  ✅ Back to Home
+
+PLAYER JOIN GAME PATH:
+  ✅ Home → Play Game screen
+  ✅ Enter name
+  ✅ Select purchased ticket
+  ✅ Enter game code
+  ✅ Join button validation
+  ✅ WebSocket connection
+  ✅ Player game screen appears
+  ✅ Tickets auto-mark numbers
+  ✅ Can claim wins
+
+ADMIN PATH:
+  ✅ Home → Admin Login
+  ✅ Username/password entry
+  ✅ Validate credentials
+  ✅ Admin panel with 2 tabs
+  ✅ Host Game tab functional
+  ✅ Create game button
+  ✅ Start/Pause/Resume buttons
+  ✅ Auto-draw functionality (6.5 sec)
+  ✅ Numbers announced with voice
+  ✅ Players list display
+  ✅ Winners list with tie detection
+  ✅ Verify Tickets tab shows all tickets
+  ✅ Logout button
+
+AUTO-DRAW FLOW:
+  ✅ START button starts drawing
+  ✅ Numbers draw every 6.5 seconds
+  ✅ PAUSE button stops drawing
+  ✅ RESUME button continues drawing
+  ✅ Random numbers (no duplicates)
+  ✅ Voice announces each number
+  ✅ Players auto-mark matching numbers
+
+TIE DETECTION:
+  ✅ Multiple players claim same prize
+  ✅ System detects tie automatically
+  ✅ Shows "TIE x2", "TIE x3", etc.
+  ✅ Auto-calculates split prize
+  ✅ Broadcasts to all players
+  ✅ No manual intervention needed
+
+DATABASE OPERATIONS:
+  ✅ Purchase ticket → INSERT
+  ✅ Get player tickets → SELECT
+  ✅ Get all tickets → SELECT
+  ✅ Data persists across restarts
+
+WEBSOCKET OPERATIONS:
+  ✅ Player join → Server receives
+  ✅ Game creation → ID generated
+  ✅ Numbers announced → Broadcast
+  ✅ Winners announced → Broadcast
+  ✅ Tie detection → Broadcast
+  ✅ Player count updates → Broadcast
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🎯 CURRENT STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ALL FLOWS IMPLEMENTED AND WORKING
+✅ ALL PATHS TESTED
+✅ ALL FEATURES FUNCTIONAL
+✅ PRODUCTION READY
+
+Flow documented: November 8, 2026
+Status: Complete and Verified
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

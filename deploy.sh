@@ -1,0 +1,55 @@
+#!/bin/bash
+
+echo "════════════════════════════════════════════════════════════"
+echo "🚀 WINTER BUMPER TAMBOLA - DEPLOYMENT SCRIPT"
+echo "════════════════════════════════════════════════════════════"
+echo ""
+
+# Check if git is initialized
+if [ ! -d ".git" ]; then
+    echo "📌 Initializing Git repository..."
+    git init
+    git add .
+    git commit -m "Initial commit: Winter Bumper Tambola Game"
+else
+    echo "📌 Git repository already initialized"
+fi
+
+echo ""
+echo "════════════════════════════════════════════════════════════"
+echo "✅ DEPLOYMENT READY"
+echo "════════════════════════════════════════════════════════════"
+echo ""
+echo "Next steps:"
+echo ""
+echo "1️⃣  SETUP NEON DATABASE"
+echo "   - Go to https://neon.tech"
+echo "   - Create new project"
+echo "   - Run the SQL from DEPLOYMENT_GUIDE.md"
+echo "   - Copy connection string"
+echo ""
+echo "2️⃣  DEPLOY TO RAILWAY"
+echo "   - Go to https://railway.app"
+echo "   - Connect your GitHub repository"
+echo "   - Add environment variables from .env.production"
+echo "   - Update with Neon connection details"
+echo "   - Deploy"
+echo ""
+echo "3️⃣  DEPLOY TO VERCEL"
+echo "   - Go to https://vercel.app"
+echo "   - Connect your GitHub repository"
+echo "   - Add environment variables"
+echo "   - Deploy"
+echo ""
+echo "4️⃣  CONFIGURE"
+echo "   - Update Railway URL in Vercel environment variables"
+echo "   - Add Vercel URL to Railway CORS settings"
+echo ""
+echo "5️⃣  TEST"
+echo "   - Open https://tambola-game.vercel.app"
+echo "   - Test full user flow"
+echo "   - Verify all features working"
+echo ""
+echo "════════════════════════════════════════════════════════════"
+echo "📚 See DEPLOYMENT_GUIDE.md for detailed instructions"
+echo "════════════════════════════════════════════════════════════"

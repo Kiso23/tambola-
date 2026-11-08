@@ -1,0 +1,20 @@
+{
+  "name": "tambola-game",
+  "version": "1.0.0",
+  "description": "Fair Diwali Tambola Game with Anti-Cheating Features",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^4.18.2",
+    "nodemailer": "^6.9.7",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "redis": "^6.3.1",
+    "sqlite3": "^6.0.1",
+    "ws": "^8.14.2"
+  }
+}
