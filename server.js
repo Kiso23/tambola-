@@ -628,28 +628,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
     });
 
-    // Get available tickets for selection (80 pre-generated tickets)
-    app.get('/api/available-tickets', async (req, res) => {
-        try {
-            res.setHeader('Content-Type', 'application/json');
-            const result = await pool.query(
-                'SELECT id, "serialNumber", "playerName", ticket, "paymentStatus" FROM tickets WHERE "paymentStatus" IN ($1, $2) ORDER BY "serialNumber" ASC',
-                ['available', 'approved']
-            );
-            const tickets = result.rows.map(row => ({
-                id: row.id,
-                serialNumber: row.serialNumber,
-                playerName: row.playerName,
-                ticket: typeof row.ticket === 'string' ? JSON.parse(row.ticket) : row.ticket,
-                isBooked: row.paymentStatus === 'approved'
-            }));
-            res.json({ tickets, totalAvailable: tickets.length });
-        } catch (err) {
-            console.error('❌ Error loading tickets:', err.message);
-            res.setHeader('Content-Type', 'application/json');
-            res.status(500).json({ error: 'Database error', message: err.message });
-        }
-    });
+
 
     app.post('/api/submit-payment', async (req, res) => {
         const { playerName, playerEmail, ticketId, screenshotBase64 } = req.body;
@@ -674,20 +653,11 @@ if (false && cluster.isPrimary && numCPUs > 1) {
 
     app.get('/api/pending-payments', async (req, res) => {
         try {
-            // Try to get from Redis cache first
-            const cached = await redisClient.get('pending_payments');
-            if (cached) {
-                return res.json({ pendingPayments: JSON.parse(cached) });
-            }
-
-            // Query database
+            // Query database directly (Redis removed for Render simplicity)
             const result = await pool.query(
                 'SELECT * FROM payment_verifications WHERE status = $1 ORDER BY submittedAt DESC',
                 ['pending']
             );
-
-            // Cache for 5 seconds
-            await redisClient.setEx('pending_payments', 5, JSON.stringify(result.rows));
 
             res.json({ pendingPayments: result.rows });
         } catch (err) {
@@ -839,9 +809,6 @@ if (false && cluster.isPrimary && numCPUs > 1) {
                 'UPDATE payment_verifications SET status = $1, verifiedAt = CURRENT_TIMESTAMP, verifiedBy = $2, notes = $3 WHERE id = $4',
                 [newStatus, adminName, notes || '', verificationId]
             );
-
-            // Clear cache
-            await redisClient.del('pending_payments');
 
             if (approved) {
                 // Get next serial number
