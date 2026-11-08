@@ -122,15 +122,15 @@ async function initializeDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
-                playerName VARCHAR(255) NOT NULL DEFAULT '#PlayerName',
-                playerEmail VARCHAR(255),
+                "playerName" VARCHAR(255) NOT NULL DEFAULT '#PlayerName',
+                "playerEmail" VARCHAR(255),
                 ticket TEXT NOT NULL,
-                paymentScreenshot TEXT,
-                paymentStatus VARCHAR(50) DEFAULT 'available',
-                verifiedBy VARCHAR(255),
-                serialNumber INTEGER UNIQUE,
-                purchasedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                verifiedAt TIMESTAMP,
+                "paymentScreenshot" TEXT,
+                "paymentStatus" VARCHAR(50) DEFAULT 'available',
+                "verifiedBy" VARCHAR(255),
+                "serialNumber" INTEGER UNIQUE,
+                "purchasedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "verifiedAt" TIMESTAMP,
                 used BOOLEAN DEFAULT false
             )
         `);
@@ -139,14 +139,14 @@ async function initializeDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS payment_verifications (
                 id SERIAL PRIMARY KEY,
-                ticketId INTEGER NOT NULL REFERENCES tickets(id),
-                playerName VARCHAR(255) NOT NULL,
-                playerEmail VARCHAR(255),
-                paymentScreenshot TEXT,
+                "ticketId" INTEGER NOT NULL REFERENCES tickets(id),
+                "playerName" VARCHAR(255) NOT NULL,
+                "playerEmail" VARCHAR(255),
+                "paymentScreenshot" TEXT,
                 status VARCHAR(50) DEFAULT 'pending',
-                submittedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                verifiedAt TIMESTAMP,
-                verifiedBy VARCHAR(255),
+                "submittedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "verifiedAt" TIMESTAMP,
+                "verifiedBy" VARCHAR(255),
                 notes TEXT
             )
         `);
