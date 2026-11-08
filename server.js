@@ -160,7 +160,109 @@ async function initializeDatabase() {
         console.log(`   Found: ${ticketCount.rows[0].count} tickets`);
         
         if (ticketCount.rows[0].count === 0) {
-            console.log('⚠️  No tickets found. Call POST /api/generate-tickets to create 80 tickets.');
+            console.log('📝 Auto-generating 80 tickets...');
+            let insertedCount = 0;
+            
+            // Generate 80 tickets automatically
+            for (let i = 1; i <= 80; i++) {
+                // Create 3x9 grid filled with zeros
+                const ticket = [[0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0]];
+                
+                // Column ranges for Tambola
+                const columnRanges = [
+                    {min: 1, max: 10},
+                    {min: 11, max: 20},
+                    {min: 21, max: 30},
+                    {min: 31, max: 40},
+                    {min: 41, max: 50},
+                    {min: 51, max: 60},
+                    {min: 61, max: 70},
+                    {min: 71, max: 80},
+                    {min: 81, max: 90}
+                ];
+                
+                // For each column, randomly place 1-2 numbers
+                for (let col = 0; col < 9; col++) {
+                    const range = columnRanges[col];
+                    const usedNumbers = new Set();
+                    
+                    // Randomly decide how many numbers in this column (1 or 2)
+                    const count = Math.floor(Math.random() * 2) + 1; // 1 or 2
+                    const rowsToFill = [];
+                    
+                    // Pick random rows for this column
+                    while (rowsToFill.length < count) {
+                        const row = Math.floor(Math.random() * 3);
+                        if (!rowsToFill.includes(row)) {
+                            rowsToFill.push(row);
+                        }
+                    }
+                    
+                    // Fill the selected rows with random numbers
+                    for (let row of rowsToFill) {
+                        let num;
+                        do {
+                            num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                        } while (usedNumbers.has(num));
+                        usedNumbers.add(num);
+                        ticket[row][col] = num;
+                    }
+                }
+                
+                // Ensure exactly 15 numbers total (5 per row)
+                let rowCounts = [0, 0, 0];
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (ticket[row][col] !== 0) {
+                            rowCounts[row]++;
+                        }
+                    }
+                }
+                
+                // If a row doesn't have exactly 5 numbers, regenerate it
+                for (let row = 0; row < 3; row++) {
+                    if (rowCounts[row] !== 5) {
+                        // Reset this row
+                        ticket[row] = [0,0,0,0,0,0,0,0,0];
+                        
+                        // Pick 5 random columns and fill with numbers
+                        const cols = [];
+                        while (cols.length < 5) {
+                            const col = Math.floor(Math.random() * 9);
+                            if (!cols.includes(col)) {
+                                cols.push(col);
+                            }
+                        }
+                        
+                        // Fill selected columns
+                        for (let col of cols) {
+                            const range = columnRanges[col];
+                            let num;
+                            do {
+                                num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                            } while (Object.values(ticket).some(r => r.includes(num)));
+                            ticket[row][col] = num;
+                        }
+                    }
+                }
+                
+                try {
+                    // Insert ticket with explicit column names
+                    await pool.query(
+                        `INSERT INTO tickets (id, "serialNumber", "playerName", ticket, "paymentStatus") 
+                         VALUES ($1, $2, $3, $4, $5)`,
+                        [i, i, '#PlayerName', JSON.stringify(ticket), 'available']
+                    );
+                    insertedCount++;
+                } catch (err) {
+                    // Ignore duplicate key errors
+                    if (!err.message.includes('duplicate')) {
+                        console.error(`Error inserting ticket ${i}:`, err.message);
+                    }
+                }
+            }
+            
+            console.log(`✅ Auto-generated ${insertedCount} tickets successfully`);
         } else {
             console.log(`✅ PostgreSQL ready (${ticketCount.rows[0].count} tickets available)`);
         }
