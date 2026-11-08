@@ -309,7 +309,35 @@ if (false && cluster.isPrimary && numCPUs > 1) {
 
     // Health check endpoint
     app.get('/api/health', (req, res) => {
-        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+        res.json({ 
+            status: 'ok', 
+            timestamp: new Date().toISOString(),
+            environment: {
+                DB_HOST: process.env.DB_HOST || 'NOT SET',
+                DB_NAME: process.env.DB_NAME || 'NOT SET',
+                DB_USER: process.env.DB_USER || 'NOT SET',
+                NODE_ENV: process.env.NODE_ENV || 'NOT SET',
+                PORT: process.env.PORT || 'NOT SET'
+            }
+        });
+    });
+
+    // Database connection test endpoint
+    app.get('/api/db-test', async (req, res) => {
+        try {
+            const result = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+            res.json({
+                success: true,
+                message: 'Database connection OK',
+                availableTickets: result.rows[0].count
+            });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                error: err.message,
+                details: err.code
+            });
+        }
     });
 
     // Game class (same as before)
