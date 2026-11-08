@@ -810,6 +810,8 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
     });
 
+    const PORT = process.env.PORT || 3000;
+    
     // Initialize database and start server
     try {
         await initializeDatabase();
