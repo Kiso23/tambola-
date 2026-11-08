@@ -162,7 +162,7 @@ async function initializeDatabase() {
 
         // Check if tickets already exist
         console.log('🔍 Checking for existing tickets...');
-        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
         console.log(`   Found: ${ticketCount.rows[0].count} tickets`);
         
         if (ticketCount.rows[0].count === 0) {
@@ -223,7 +223,7 @@ async function initializeDatabase() {
 
                 try {
                     const result = await pool.query(
-                        'INSERT INTO tickets (serialNumber, playerName, ticket, paymentstatus) VALUES ($1, $2, $3, $4)',
+                        'INSERT INTO tickets (serialNumber, playerName, ticket, "paymentStatus") VALUES ($1, $2, $3, $4)',
                         [i, '#PlayerName', JSON.stringify(ticket), 'available']
                     );
                     insertedCount++;
@@ -238,7 +238,7 @@ async function initializeDatabase() {
             console.log(`✅ Generated and inserted ${insertedCount} tickets successfully`);
             
             // Verify tickets were inserted
-            const verifyCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+            const verifyCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
             console.log(`✅ Verified: ${verifyCount.rows[0].count} tickets in database`);
         } else {
             console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
@@ -330,7 +330,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
     // Database connection test endpoint
     app.get('/api/db-test', async (req, res) => {
         try {
-            const result = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+            const result = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
             res.json({
                 success: true,
                 message: 'Database connection OK',
@@ -741,13 +741,13 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         try {
             res.setHeader('Content-Type', 'application/json');
             const result = await pool.query(
-                'SELECT id, serialNumber, playerName, ticket, paymentStatus FROM tickets WHERE paymentStatus = $1 ORDER BY serialNumber ASC LIMIT 80',
+                'SELECT id, "serialNumber", "playerName", ticket, "paymentStatus" FROM tickets WHERE "paymentStatus" = $1 ORDER BY "serialNumber" ASC LIMIT 80',
                 ['available']
             );
             const tickets = result.rows.map(row => ({
                 id: row.id,
-                serialNumber: row.serialnumber || row.serialNumber,
-                playerName: row.playername || row.playerName,
+                serialNumber: row.serialNumber,
+                playerName: row.playerName,
                 ticket: typeof row.ticket === 'string' ? JSON.parse(row.ticket) : row.ticket,
                 isBooked: false
             }));
