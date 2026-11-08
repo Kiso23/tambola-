@@ -5,7 +5,7 @@
 // API Configuration - Points to backend server
 const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
     ? 'http://localhost:3000'
-    : 'https://tambola-j8p7.onrender.com';
+    : window.location.origin; // Use current origin (same server)
 
 const ADMIN_CREDENTIALS = { 
     username: localStorage.getItem('adminUsername') || 'admin', 
