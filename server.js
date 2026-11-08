@@ -111,14 +111,8 @@ async function initializeDatabase() {
         const testQuery = await pool.query('SELECT NOW()');
         console.log('✅ Database connection successful');
         
-        // Drop existing tables if they have the wrong schema (for migration)
-        console.log('🗑️  Dropping old tables...');
-        await pool.query(`DROP TABLE IF EXISTS payment_verifications CASCADE`);
-        await pool.query(`DROP TABLE IF EXISTS tickets CASCADE`);
-        console.log('✅ Old tables dropped');
-        
-        // Recreate with correct schema
-        console.log('🔨 Creating tables...');
+        // Create tables IF NOT EXISTS (don't drop!)
+        console.log('🔨 Ensuring tables exist...');
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
@@ -134,7 +128,7 @@ async function initializeDatabase() {
                 used BOOLEAN DEFAULT false
             )
         `);
-        console.log('✅ Tickets table created');
+        console.log('✅ Tickets table ready');
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS payment_verifications (
@@ -150,7 +144,7 @@ async function initializeDatabase() {
                 notes TEXT
             )
         `);
-        console.log('✅ Payment verifications table created');
+        console.log('✅ Payment verifications table ready');
 
         await pool.query(`
             CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_verifications(status)
@@ -168,7 +162,7 @@ async function initializeDatabase() {
         if (ticketCount.rows[0].count === 0) {
             console.log('⚠️  No tickets found. Call POST /api/generate-tickets to create 80 tickets.');
         } else {
-            console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
+            console.log(`✅ PostgreSQL ready (${ticketCount.rows[0].count} tickets available)`);
         }
     } catch (err) {
         console.error('❌ Error initializing database:', err.message);
