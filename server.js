@@ -166,80 +166,7 @@ async function initializeDatabase() {
         console.log(`   Found: ${ticketCount.rows[0].count} tickets`);
         
         if (ticketCount.rows[0].count === 0) {
-            console.log('📝 Generating 80 Tambola tickets...');
-            let insertedCount = 0;
-            
-            // Generate 80 random tickets in 3x9 format
-            for (let i = 1; i <= 80; i++) {
-                const ticket = [[], [], []]; // 3 rows x 9 columns
-                
-                // Generate proper Tambola ticket (3 rows, 9 columns, 15 numbers total)
-                // Column ranges: 1-10, 11-20, 21-30, 31-40, 41-50, 51-60, 61-70, 71-80, 81-90
-                const columnRanges = [
-                    {min: 1, max: 10},
-                    {min: 11, max: 20},
-                    {min: 21, max: 30},
-                    {min: 31, max: 40},
-                    {min: 41, max: 50},
-                    {min: 51, max: 60},
-                    {min: 61, max: 70},
-                    {min: 71, max: 80},
-                    {min: 81, max: 90}
-                ];
-                
-                // For each column, place 0-2 numbers randomly in the 3 rows
-                for (let col = 0; col < 9; col++) {
-                    const range = columnRanges[col];
-                    const numbersInColumn = [];
-                    
-                    // Randomly decide how many numbers in this column (0, 1, or 2)
-                    const count = Math.floor(Math.random() * 3); // 0, 1, or 2
-                    
-                    // Generate unique numbers for this column
-                    for (let n = 0; n < count; n++) {
-                        let num;
-                        do {
-                            num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-                        } while (numbersInColumn.includes(num));
-                        numbersInColumn.push(num);
-                    }
-                    
-                    // Place numbers in random rows
-                    const positions = [0, 1, 2];
-                    for (let pos = 0; pos < count; pos++) {
-                        const rowIdx = positions.splice(Math.floor(Math.random() * positions.length), 1)[0];
-                        ticket[rowIdx][col] = numbersInColumn[pos];
-                    }
-                }
-                
-                // Fill empty cells with 0
-                for (let row = 0; row < 3; row++) {
-                    for (let col = 0; col < 9; col++) {
-                        if (ticket[row][col] === undefined) {
-                            ticket[row][col] = 0;
-                        }
-                    }
-                }
-
-                try {
-                    const result = await pool.query(
-                        'INSERT INTO tickets ("serialNumber", "playerName", ticket, "paymentStatus") VALUES ($1, $2, $3, $4)',
-                        [i, '#PlayerName', JSON.stringify(ticket), 'available']
-                    );
-                    insertedCount++;
-                    if (i % 10 === 0) {
-                        console.log(`   📌 Generated ${i}/80 tickets...`);
-                    }
-                } catch (insertErr) {
-                    console.error(`❌ Error inserting ticket ${i}:`, insertErr.message);
-                }
-            }
-            
-            console.log(`✅ Generated and inserted ${insertedCount} tickets successfully`);
-            
-            // Verify tickets were inserted
-            const verifyCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
-            console.log(`✅ Verified: ${verifyCount.rows[0].count} tickets in database`);
+            console.log('⚠️  No tickets found. Call POST /api/generate-tickets to create 80 tickets.');
         } else {
             console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
         }
@@ -312,19 +239,84 @@ if (false && cluster.isPrimary && numCPUs > 1) {
     const games = new Map();
     const gameConnections = new Map();
 
-    // Health check endpoint
-    app.get('/api/health', (req, res) => {
-        res.json({ 
-            status: 'ok', 
-            timestamp: new Date().toISOString(),
-            environment: {
-                DB_HOST: process.env.DB_HOST || 'NOT SET',
-                DB_NAME: process.env.DB_NAME || 'NOT SET',
-                DB_USER: process.env.DB_USER || 'NOT SET',
-                NODE_ENV: process.env.NODE_ENV || 'NOT SET',
-                PORT: process.env.PORT || 'NOT SET'
+    // Generate 80 tickets endpoint (call this manually to populate database)
+    app.post('/api/generate-tickets', async (req, res) => {
+        try {
+            console.log('🔧 Manual ticket generation started...');
+            
+            // First delete all existing tickets
+            await pool.query('DELETE FROM tickets');
+            console.log('🗑️  Deleted old tickets');
+            
+            let insertedCount = 0;
+            
+            // Generate 80 tickets
+            for (let i = 1; i <= 80; i++) {
+                const ticket = [[], [], []];
+                
+                const columnRanges = [
+                    {min: 1, max: 10},
+                    {min: 11, max: 20},
+                    {min: 21, max: 30},
+                    {min: 31, max: 40},
+                    {min: 41, max: 50},
+                    {min: 51, max: 60},
+                    {min: 61, max: 70},
+                    {min: 71, max: 80},
+                    {min: 81, max: 90}
+                ];
+                
+                // Generate ticket numbers
+                for (let col = 0; col < 9; col++) {
+                    const range = columnRanges[col];
+                    const numbersInColumn = [];
+                    const count = Math.floor(Math.random() * 3);
+                    
+                    for (let n = 0; n < count; n++) {
+                        let num;
+                        do {
+                            num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                        } while (numbersInColumn.includes(num));
+                        numbersInColumn.push(num);
+                    }
+                    
+                    const positions = [0, 1, 2];
+                    for (let pos = 0; pos < count; pos++) {
+                        const rowIdx = positions.splice(Math.floor(Math.random() * positions.length), 1)[0];
+                        ticket[rowIdx][col] = numbersInColumn[pos];
+                    }
+                }
+                
+                // Fill empty cells
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (ticket[row][col] === undefined) {
+                            ticket[row][col] = 0;
+                        }
+                    }
+                }
+                
+                // Insert ticket with explicit column names
+                await pool.query(
+                    `INSERT INTO tickets (id, "serialNumber", "playerName", ticket, "paymentStatus") 
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [i, i, '#PlayerName', JSON.stringify(ticket), 'available']
+                );
+                insertedCount++;
             }
-        });
+            
+            res.json({
+                success: true,
+                message: `✅ Generated ${insertedCount} tickets successfully`,
+                count: insertedCount
+            });
+        } catch (err) {
+            console.error('❌ Error generating tickets:', err.message);
+            res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
     });
 
     // Database connection test endpoint
