@@ -252,8 +252,10 @@ if (false && cluster.isPrimary && numCPUs > 1) {
             
             // Generate 80 tickets
             for (let i = 1; i <= 80; i++) {
-                const ticket = [[], [], []];
+                // Create 3x9 grid filled with zeros
+                const ticket = [[0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0]];
                 
+                // Column ranges for Tambola
                 const columnRanges = [
                     {min: 1, max: 10},
                     {min: 11, max: 20},
@@ -266,32 +268,67 @@ if (false && cluster.isPrimary && numCPUs > 1) {
                     {min: 81, max: 90}
                 ];
                 
-                // Generate ticket numbers
+                // For each column, randomly place 1-2 numbers
                 for (let col = 0; col < 9; col++) {
                     const range = columnRanges[col];
-                    const numbersInColumn = [];
-                    const count = Math.floor(Math.random() * 3);
+                    const usedNumbers = new Set();
                     
-                    for (let n = 0; n < count; n++) {
+                    // Randomly decide how many numbers in this column (1 or 2)
+                    const count = Math.floor(Math.random() * 2) + 1; // 1 or 2
+                    const rowsToFill = [];
+                    
+                    // Pick random rows for this column
+                    while (rowsToFill.length < count) {
+                        const row = Math.floor(Math.random() * 3);
+                        if (!rowsToFill.includes(row)) {
+                            rowsToFill.push(row);
+                        }
+                    }
+                    
+                    // Fill the selected rows with random numbers
+                    for (let row of rowsToFill) {
                         let num;
                         do {
                             num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-                        } while (numbersInColumn.includes(num));
-                        numbersInColumn.push(num);
-                    }
-                    
-                    const positions = [0, 1, 2];
-                    for (let pos = 0; pos < count; pos++) {
-                        const rowIdx = positions.splice(Math.floor(Math.random() * positions.length), 1)[0];
-                        ticket[rowIdx][col] = numbersInColumn[pos];
+                        } while (usedNumbers.has(num));
+                        usedNumbers.add(num);
+                        ticket[row][col] = num;
                     }
                 }
                 
-                // Fill empty cells
+                // Ensure exactly 15 numbers total (5 per row)
+                let rowCounts = [0, 0, 0];
                 for (let row = 0; row < 3; row++) {
                     for (let col = 0; col < 9; col++) {
-                        if (ticket[row][col] === undefined) {
-                            ticket[row][col] = 0;
+                        if (ticket[row][col] !== 0) {
+                            rowCounts[row]++;
+                        }
+                    }
+                }
+                
+                // If a row doesn't have exactly 5 numbers, regenerate it
+                for (let row = 0; row < 3; row++) {
+                    if (rowCounts[row] !== 5) {
+                        // Reset this row
+                        ticket[row] = [0,0,0,0,0,0,0,0,0];
+                        
+                        // Pick 5 random columns and fill with numbers
+                        const cols = [];
+                        while (cols.length < 5) {
+                            const col = Math.floor(Math.random() * 9);
+                            if (!cols.includes(col)) {
+                                cols.push(col);
+                            }
+                        }
+                        
+                        // Fill selected columns
+                        for (let col of cols) {
+                            const range = columnRanges[col];
+                            let num;
+                            do {
+                                num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                            } while (Object.values(ticket).some(r => r.includes(num)));
+                            ticket[row][col] = num;
                         }
                     }
                 }
@@ -303,6 +340,10 @@ if (false && cluster.isPrimary && numCPUs > 1) {
                     [i, i, '#PlayerName', JSON.stringify(ticket), 'available']
                 );
                 insertedCount++;
+                
+                if (i % 10 === 0) {
+                    console.log(`   ✅ Generated ${i}/80 tickets...`);
+                }
             }
             
             res.json({
