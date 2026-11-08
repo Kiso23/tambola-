@@ -94,13 +94,13 @@ async function initializeDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
-                playerName VARCHAR(255) NOT NULL,
+                playerName VARCHAR(255) NOT NULL DEFAULT '#PlayerName',
                 playerEmail VARCHAR(255),
                 ticket TEXT NOT NULL,
                 paymentScreenshot TEXT,
-                paymentStatus VARCHAR(50) DEFAULT 'pending',
+                paymentStatus VARCHAR(50) DEFAULT 'available',
                 verifiedBy VARCHAR(255),
-                serialNumber INTEGER,
+                serialNumber INTEGER UNIQUE,
                 purchasedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 verifiedAt TIMESTAMP,
                 used BOOLEAN DEFAULT false
@@ -130,9 +130,52 @@ async function initializeDatabase() {
             CREATE INDEX IF NOT EXISTS idx_ticket_email ON tickets(playerEmail)
         `);
 
-        console.log('✅ PostgreSQL tables initialized');
+        // Check if tickets already exist
+        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentStatus = $1', ['available']);
+        
+        if (ticketCount.rows[0].count === 0) {
+            console.log('📝 Generating 80 Tambola tickets...');
+            
+            // Generate 80 random tickets
+            for (let i = 1; i <= 80; i++) {
+                const ticket = {
+                    numbers: [],
+                    structure: []
+                };
+
+                // 3x9 grid with 15 numbers, proper column ranges
+                for (let col = 0; col < 9; col++) {
+                    const columnNumbers = [];
+                    const minNum = col * 10 + 1;
+                    const maxNum = (col + 1) * 10;
+
+                    // Generate 2 random numbers for this column
+                    for (let j = 0; j < 2; j++) {
+                        let num = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
+                        while (columnNumbers.includes(num)) {
+                            num = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
+                        }
+                        columnNumbers.push(num);
+                    }
+
+                    ticket.numbers.push(...columnNumbers);
+                }
+
+                ticket.numbers.sort((a, b) => a - b);
+
+                await pool.query(
+                    'INSERT INTO tickets (serialNumber, playerName, ticket, paymentStatus) VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
+                    [i, '#PlayerName', JSON.stringify(ticket), 'available']
+                );
+            }
+            
+            console.log('✅ Generated 80 available tickets');
+        } else {
+            console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
+        }
     } catch (err) {
         console.error('Error initializing database:', err);
+        throw err;
     }
 }
 
@@ -755,7 +798,14 @@ if (cluster.isPrimary) {
     });
 
     const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
-        console.log(`✨ Worker ${process.pid} running on port ${PORT}`);
+    
+    // Initialize database and start server
+    initializeDatabase().then(() => {
+        server.listen(PORT, () => {
+            console.log(`✨ Worker ${process.pid} running on port ${PORT}`);
+        });
+    }).catch(err => {
+        console.error('Failed to initialize database:', err);
+        process.exit(1);
     });
 }
