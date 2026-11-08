@@ -73,6 +73,8 @@ async function sendEmailViaBrevo(to, subject, htmlContent) {
 // ═════════════════════════════════════════════════════════════════════
 // DATABASE POOL (PostgreSQL)
 // ═════════════════════════════════════════════════════════════════════
+// DATABASE POOL (PostgreSQL)
+// ═════════════════════════════════════════════════════════════════════
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
@@ -81,11 +83,12 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'tambola_game',
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 5000,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
+    console.error('❌ Database Error:', err);
 });
 
 // Initialize PostgreSQL tables
@@ -180,9 +183,11 @@ async function initializeDatabase() {
 }
 
 // ═════════════════════════════════════════════════════════════════════
-// CLUSTERING SETUP
+// DISABLE CLUSTERING FOR RENDER (Single CPU environment)
 // ═════════════════════════════════════════════════════════════════════
-if (cluster.isPrimary) {
+
+// Skip clustering in production (Render has only 1 CPU)
+if (false && cluster.isPrimary && numCPUs > 1) {
     console.log('\n' + '═'.repeat(70));
     console.log('❄️  WINTER BUMPER - Premium Lottery Platform (LOAD BALANCED)');
     console.log('═'.repeat(70));
