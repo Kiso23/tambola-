@@ -142,40 +142,75 @@ async function initializeDatabase() {
         `);
 
         // Check if tickets already exist
-        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentStatus = $1', ['available']);
+        const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE "paymentStatus" = $1', ['available']);
         
         if (ticketCount.rows[0].count === 0) {
             console.log('📝 Generating 80 Tambola tickets...');
             
-            // Generate 80 random tickets
+            // Generate 80 random tickets in 3x9 format
             for (let i = 1; i <= 80; i++) {
-                const ticket = {
-                    numbers: [],
-                    structure: []
-                };
-
-                // 3x9 grid with 15 numbers, proper column ranges
+                const ticket = [[], [], []]; // 3 rows x 9 columns
+                
+                // Generate proper Tambola ticket (3 rows, 9 columns, 15 numbers total)
+                // Column ranges: 1-10, 11-20, 21-30, 31-40, 41-50, 51-60, 61-70, 71-80, 81-90
+                const columnRanges = [
+                    {min: 1, max: 10},
+                    {min: 11, max: 20},
+                    {min: 21, max: 30},
+                    {min: 31, max: 40},
+                    {min: 41, max: 50},
+                    {min: 51, max: 60},
+                    {min: 61, max: 70},
+                    {min: 71, max: 80},
+                    {min: 81, max: 90}
+                ];
+                
+                // For each column, place 0-2 numbers randomly in the 3 rows
                 for (let col = 0; col < 9; col++) {
-                    const columnNumbers = [];
-                    const minNum = col * 10 + 1;
-                    const maxNum = (col + 1) * 10;
-
-                    // Generate 2 random numbers for this column
-                    for (let j = 0; j < 2; j++) {
-                        let num = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
-                        while (columnNumbers.includes(num)) {
-                            num = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
-                        }
-                        columnNumbers.push(num);
+                    const range = columnRanges[col];
+                    const numbersInColumn = [];
+                    
+                    // Randomly decide how many numbers in this column (0, 1, or 2)
+                    const count = Math.floor(Math.random() * 3); // 0, 1, or 2
+                    
+                    // Generate unique numbers for this column
+                    for (let n = 0; n < count; n++) {
+                        let num;
+                        do {
+                            num = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                        } while (numbersInColumn.includes(num));
+                        numbersInColumn.push(num);
                     }
-
-                    ticket.numbers.push(...columnNumbers);
+                    
+                    // Place numbers in random rows
+                    const positions = [0, 1, 2];
+                    for (let pos = 0; pos < count; pos++) {
+                        const rowIdx = positions.splice(Math.floor(Math.random() * positions.length), 1)[0];
+                        ticket[rowIdx][col] = numbersInColumn[pos];
+                    }
+                }
+                
+                // Ensure 15 numbers total (5 per row)
+                let totalNumbers = 0;
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (ticket[row][col] !== undefined && ticket[row][col] !== 0) {
+                            totalNumbers++;
+                        }
+                    }
+                }
+                
+                // Fill empty cells with 0
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (ticket[row][col] === undefined) {
+                            ticket[row][col] = 0;
+                        }
+                    }
                 }
 
-                ticket.numbers.sort((a, b) => a - b);
-
                 await pool.query(
-                    'INSERT INTO tickets (serialNumber, playerName, ticket, paymentStatus) VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
+                    'INSERT INTO tickets (serialNumber, "playerName", ticket, "paymentStatus") VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
                     [i, '#PlayerName', JSON.stringify(ticket), 'available']
                 );
             }
