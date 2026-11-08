@@ -157,7 +157,7 @@ async function initializeDatabase() {
         `);
 
         await pool.query(`
-            CREATE INDEX IF NOT EXISTS idx_ticket_email ON tickets(playerEmail)
+            CREATE INDEX IF NOT EXISTS idx_ticket_email ON tickets("playerEmail")
         `);
 
         // Check if tickets already exist
@@ -223,7 +223,7 @@ async function initializeDatabase() {
 
                 try {
                     const result = await pool.query(
-                        'INSERT INTO tickets (serialNumber, playerName, ticket, "paymentStatus") VALUES ($1, $2, $3, $4)',
+                        'INSERT INTO tickets ("serialNumber", "playerName", ticket, "paymentStatus") VALUES ($1, $2, $3, $4)',
                         [i, '#PlayerName', JSON.stringify(ticket), 'available']
                     );
                     insertedCount++;
@@ -556,7 +556,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
         try {
             const result = await pool.query(
-                'INSERT INTO tickets (playerName, ticket) VALUES ($1, $2) RETURNING id',
+                'INSERT INTO tickets ("playerName", ticket) VALUES ($1, $2) RETURNING id',
                 [playerName, JSON.stringify(ticket)]
             );
             res.json({ success: true, message: `Ticket purchased for ${playerName}`, ticketId: result.rows[0].id });
@@ -570,7 +570,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         const { playerName } = req.params;
         try {
             const result = await pool.query(
-                'SELECT id, ticket, purchasedAt FROM tickets WHERE playerName = $1 AND used = false ORDER BY purchasedAt DESC',
+                'SELECT id, ticket, "purchasedAt" FROM tickets WHERE "playerName" = $1 AND used = false ORDER BY "purchasedAt" DESC',
                 [playerName]
             );
             const tickets = result.rows.map(row => ({
@@ -592,7 +592,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
         try {
             const result = await pool.query(
-                'SELECT id, ticket FROM tickets WHERE playerName = $1 AND id = $2',
+                'SELECT id, ticket FROM tickets WHERE "playerName" = $1 AND id = $2',
                 [playerName, ticketId]
             );
             if (result.rows.length === 0) {
@@ -615,7 +615,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         try {
             // Check if ticket is already booked
             const checkResult = await pool.query(
-                'SELECT id, paymentStatus, playerName FROM tickets WHERE id = $1',
+                'SELECT id, "paymentStatus", "playerName" FROM tickets WHERE id = $1',
                 [ticketId]
             );
             
@@ -624,8 +624,8 @@ if (false && cluster.isPrimary && numCPUs > 1) {
             }
             
             const ticket = checkResult.rows[0];
-            const currentPaymentStatus = ticket.paymentstatus || ticket.paymentStatus;
-            const currentPlayerName = ticket.playername || ticket.playerName;
+            const currentPaymentStatus = ticket.paymentStatus;
+            const currentPlayerName = ticket.playerName;
             
             // Check if ticket is already booked by someone else
             if (currentPaymentStatus === 'approved' && currentPlayerName.indexOf('Ticket-') === -1) {
@@ -634,16 +634,16 @@ if (false && cluster.isPrimary && numCPUs > 1) {
             
             // Book the ticket
             const result = await pool.query(
-                'UPDATE tickets SET playerName = $1, playerEmail = $2, paymentStatus = $3 WHERE id = $4 RETURNING id, serialNumber, ticket',
+                'UPDATE tickets SET "playerName" = $1, "playerEmail" = $2, "paymentStatus" = $3 WHERE id = $4 RETURNING id, "serialNumber", ticket',
                 [playerName, playerEmail, 'pending', ticketId]
             );
             
             res.json({
                 success: true,
                 id: result.rows[0].id,
-                message: `Ticket #${result.rows[0].serialnumber || result.rows[0].serialNumber} booked successfully`,
+                message: `Ticket #${result.rows[0].serialNumber} booked successfully`,
                 ticket: JSON.parse(result.rows[0].ticket),
-                serialNumber: result.rows[0].serialnumber || result.rows[0].serialNumber
+                serialNumber: result.rows[0].serialNumber
             });
         } catch (err) {
             console.error('DB error:', err);
@@ -690,7 +690,7 @@ if (false && cluster.isPrimary && numCPUs > 1) {
         }
         try {
             const result = await pool.query(
-                'INSERT INTO payment_verifications (ticketId, playerName, playerEmail, paymentScreenshot, status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                'INSERT INTO payment_verifications ("ticketId", "playerName", "playerEmail", "paymentScreenshot", status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
                 [ticketId, playerName, playerEmail, screenshotBase64.substring(0, 1000), 'pending']
             );
             res.json({
