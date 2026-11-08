@@ -408,7 +408,7 @@ function submitPaymentAndGetTicket() {
         // Submit payment for verification (using first booked ticket ID)
         const ticketId = gameState.bookedTickets[0].id;
         
-        fetch(`${API_BASE_URL}/api/submit-payment', {
+        fetch(`${API_BASE_URL}/api/submit-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -513,7 +513,7 @@ function searchPlayerTickets() {
 // Load available pre-generated tickets for selection
 function loadAvailableTickets() {
     showLoader();
-    fetch(`${API_BASE_URL}/api/available-tickets')
+    fetch(`${API_BASE_URL}/api/available-tickets`)
         .then(res => res.json())
         .then(data => {
             hideLoader();
@@ -655,7 +655,7 @@ function bookPreGeneratedTicket() {
     
     // Book all selected tickets
     Promise.all(selectedTickets.map(ticket =>
-        fetch(`${API_BASE_URL}/api/book-ticket', {
+        fetch(`${API_BASE_URL}/api/book-ticket`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -799,7 +799,7 @@ function joinGame() {
     }
 
     showLoader();
-    fetch(`${API_BASE_URL}/api/use-ticket', {
+    fetch(`${API_BASE_URL}/api/use-ticket`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -900,7 +900,7 @@ function switchAdminTab(tab) {
 }
 
 function loadPendingPayments() {
-    fetch(`${API_BASE_URL}/api/pending-payments')
+    fetch(`${API_BASE_URL}/api/pending-payments`)
         .then(res => res.json())
         .then(data => {
             displayPendingPayments(data.pendingPayments || []);
@@ -992,7 +992,7 @@ function approvePayment(verificationId, ticketId, playerEmail, playerName) {
         .then(data => {
             const ticket = data.ticket || [];
             
-            return fetch(`${API_BASE_URL}/api/verify-payment', {
+            return fetch(`${API_BASE_URL}/api/verify-payment`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1025,7 +1025,7 @@ function rejectPayment(verificationId, ticketId, playerEmail, playerName) {
     
     if (reason === null) return; // User cancelled
     
-    fetch(`${API_BASE_URL}/api/verify-payment', {
+    fetch(`${API_BASE_URL}/api/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
