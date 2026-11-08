@@ -102,11 +102,23 @@ pool.on('error', (err) => {
 // Initialize PostgreSQL tables
 async function initializeDatabase() {
     try {
+        // Test connection first
+        console.log('🔍 Testing database connection...');
+        console.log(`   Host: ${process.env.DB_HOST}`);
+        console.log(`   Database: ${process.env.DB_NAME}`);
+        console.log(`   User: ${process.env.DB_USER}`);
+        
+        const testQuery = await pool.query('SELECT NOW()');
+        console.log('✅ Database connection successful');
+        
         // Drop existing tables if they have the wrong schema (for migration)
+        console.log('🗑️  Dropping old tables...');
         await pool.query(`DROP TABLE IF EXISTS payment_verifications CASCADE`);
         await pool.query(`DROP TABLE IF EXISTS tickets CASCADE`);
+        console.log('✅ Old tables dropped');
         
         // Recreate with correct schema
+        console.log('🔨 Creating tables...');
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
@@ -122,6 +134,7 @@ async function initializeDatabase() {
                 used BOOLEAN DEFAULT false
             )
         `);
+        console.log('✅ Tickets table created');
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS payment_verifications (
@@ -137,6 +150,7 @@ async function initializeDatabase() {
                 notes TEXT
             )
         `);
+        console.log('✅ Payment verifications table created');
 
         await pool.query(`
             CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_verifications(status)
@@ -147,10 +161,13 @@ async function initializeDatabase() {
         `);
 
         // Check if tickets already exist
+        console.log('🔍 Checking for existing tickets...');
         const ticketCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+        console.log(`   Found: ${ticketCount.rows[0].count} tickets`);
         
         if (ticketCount.rows[0].count === 0) {
             console.log('📝 Generating 80 Tambola tickets...');
+            let insertedCount = 0;
             
             // Generate 80 random tickets in 3x9 format
             for (let i = 1; i <= 80; i++) {
@@ -195,16 +212,6 @@ async function initializeDatabase() {
                     }
                 }
                 
-                // Ensure 15 numbers total (5 per row)
-                let totalNumbers = 0;
-                for (let row = 0; row < 3; row++) {
-                    for (let col = 0; col < 9; col++) {
-                        if (ticket[row][col] !== undefined && ticket[row][col] !== 0) {
-                            totalNumbers++;
-                        }
-                    }
-                }
-                
                 // Fill empty cells with 0
                 for (let row = 0; row < 3; row++) {
                     for (let col = 0; col < 9; col++) {
@@ -214,18 +221,26 @@ async function initializeDatabase() {
                     }
                 }
 
-                await pool.query(
-                    'INSERT INTO tickets (serialNumber, playerName, ticket, paymentStatus) VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
-                    [i, '#PlayerName', JSON.stringify(ticket), 'available']
-                );
+                try {
+                    const result = await pool.query(
+                        'INSERT INTO tickets (serialNumber, playerName, ticket, paymentStatus) VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
+                        [i, '#PlayerName', JSON.stringify(ticket), 'available']
+                    );
+                    if (result.rowCount > 0) {
+                        insertedCount++;
+                    }
+                } catch (insertErr) {
+                    console.error(`❌ Error inserting ticket ${i}:`, insertErr.message);
+                }
             }
             
-            console.log('✅ Generated 80 available tickets');
+            console.log(`✅ Generated and inserted ${insertedCount} tickets`);
         } else {
             console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
         }
     } catch (err) {
-        console.error('Error initializing database:', err);
+        console.error('❌ Error initializing database:', err.message);
+        console.error('Stack:', err.stack);
         throw err;
     }
 }
