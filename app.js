@@ -1,6 +1,12 @@
 // ⚠️ IMPORTANT: DO NOT hardcode credentials in source!
 // Use environment variables (loaded from .env file)
 // For now, using simple defaults - CHANGE IN PRODUCTION
+
+// API Configuration - Points to backend server
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? 'http://localhost:3000'
+    : 'https://tambola-j8p7.onrender.com';
+
 const ADMIN_CREDENTIALS = { 
     username: localStorage.getItem('adminUsername') || 'admin', 
     password: localStorage.getItem('adminPassword') || 'admin123' 
@@ -402,7 +408,7 @@ function submitPaymentAndGetTicket() {
         // Submit payment for verification (using first booked ticket ID)
         const ticketId = gameState.bookedTickets[0].id;
         
-        fetch('/api/submit-payment', {
+        fetch(`${API_BASE_URL}/api/submit-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -507,7 +513,7 @@ function searchPlayerTickets() {
 // Load available pre-generated tickets for selection
 function loadAvailableTickets() {
     showLoader();
-    fetch('/api/available-tickets')
+    fetch(`${API_BASE_URL}/api/available-tickets')
         .then(res => res.json())
         .then(data => {
             hideLoader();
@@ -649,7 +655,7 @@ function bookPreGeneratedTicket() {
     
     // Book all selected tickets
     Promise.all(selectedTickets.map(ticket =>
-        fetch('/api/book-ticket', {
+        fetch(`${API_BASE_URL}/api/book-ticket', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -793,7 +799,7 @@ function joinGame() {
     }
 
     showLoader();
-    fetch('/api/use-ticket', {
+    fetch(`${API_BASE_URL}/api/use-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -894,7 +900,7 @@ function switchAdminTab(tab) {
 }
 
 function loadPendingPayments() {
-    fetch('/api/pending-payments')
+    fetch(`${API_BASE_URL}/api/pending-payments')
         .then(res => res.json())
         .then(data => {
             displayPendingPayments(data.pendingPayments || []);
@@ -986,7 +992,7 @@ function approvePayment(verificationId, ticketId, playerEmail, playerName) {
         .then(data => {
             const ticket = data.ticket || [];
             
-            return fetch('/api/verify-payment', {
+            return fetch(`${API_BASE_URL}/api/verify-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1019,7 +1025,7 @@ function rejectPayment(verificationId, ticketId, playerEmail, playerName) {
     
     if (reason === null) return; // User cancelled
     
-    fetch('/api/verify-payment', {
+    fetch(`${API_BASE_URL}/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
