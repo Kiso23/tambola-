@@ -223,18 +223,23 @@ async function initializeDatabase() {
 
                 try {
                     const result = await pool.query(
-                        'INSERT INTO tickets (serialNumber, playerName, ticket, paymentStatus) VALUES ($1, $2, $3, $4) ON CONFLICT (serialNumber) DO NOTHING',
+                        'INSERT INTO tickets (serialNumber, playerName, ticket, paymentstatus) VALUES ($1, $2, $3, $4)',
                         [i, '#PlayerName', JSON.stringify(ticket), 'available']
                     );
-                    if (result.rowCount > 0) {
-                        insertedCount++;
+                    insertedCount++;
+                    if (i % 10 === 0) {
+                        console.log(`   📌 Generated ${i}/80 tickets...`);
                     }
                 } catch (insertErr) {
                     console.error(`❌ Error inserting ticket ${i}:`, insertErr.message);
                 }
             }
             
-            console.log(`✅ Generated and inserted ${insertedCount} tickets`);
+            console.log(`✅ Generated and inserted ${insertedCount} tickets successfully`);
+            
+            // Verify tickets were inserted
+            const verifyCount = await pool.query('SELECT COUNT(*) as count FROM tickets WHERE paymentstatus = $1', ['available']);
+            console.log(`✅ Verified: ${verifyCount.rows[0].count} tickets in database`);
         } else {
             console.log(`✅ PostgreSQL tables initialized (${ticketCount.rows[0].count} tickets available)`);
         }
